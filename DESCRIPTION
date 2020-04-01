@@ -1,0 +1,15 @@
+Package: ecap
+Type: Package
+Title: ECAP Adjusts Probability Estimates
+Version: 0.1.0
+Author: Bradley Rava - USC Marshall - Department of Data Sciences and Operations
+Maintainer: Bradley Rava <brava@marshall.usc.edu>
+Description: This package implements the ECAP probability adjustment procedure as described in the paper "Irrational Exuberance: Correcting Bias in Probability Estimates" By: James, Radchenko, Rava 2020. The package includes a function that preforms the adjustment and a function that estimates the parameters needed to implement ECAP.
+License: What license is it under?
+Depends:
+	splines (>= 3.6.0),
+	quadprog (>= 1.5.7),
+	ggplot2
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.0
