@@ -1,4 +1,0 @@
-ecap_adj                Function that takes in a vector of probability
-                        estimates and returns the Excess Certainty
-                        Adjusted Probability (ECAP) estimates.
-ecap_param_est          ECAP parameter estimation.
