@@ -1,0 +1,95 @@
+#' ECAP Adjust Probability Estimates
+#'
+#' This function ECAP adjusts probability estimates. As an input, the function takes a
+#' numeric vector of probabilities, an estimate of 3 parameters needed for the ECAP adjustment.
+#' The level of corruption, the bias, and a tuning parameter that adjust the level of flexibility in
+#' the ECAP estimation procedure. As an output, a vector of ECAP probabilities are returned along with
+#' a matrix that includes the ECAP probabilities along with the unadjusted ones.
+#'
+#' @param unadjusted_prob Numeric vector of probability estimates that you want to preform the ECAP adjustment to.
+#' @param lambda Numeric value of the level of smoothness in the ECAP estimation.
+#' @param gamma Numeric value of the level of corruption in the unadjusted probability estimates.
+#' @param theta Numeric value of the level of bias in the unadjusted probability estimates.
+#' @return A list where the first element is a vector of the ECAP adjusted probabilities. The second
+#' is a matrix of the unadjusted and ECAP probabilities.
+#' @author Bradley Rava. PhD Candidate at the University of Southern California's Marshall School of Business.
+#' Department of Data Sciences and Operations.
+#' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
+#' @export
+ecap_adj <- function(unadjusted_prob, lambda, gamma, theta=0) {
+  if (lambda < 0) {
+    return(print("Lambda cannot be negative."))
+  }
+  if (gamma < 0) {
+    return(print("Gamma cannot be negative."))
+  }
+  if (theta < -4 | theta > 2) {
+    return(print("Theta can only take values between -4 and 2"))
+  }
+
+  prob_tilde <- unadjusted_prob
+  lambda_opt_param <- lambda
+  gamma_opt_param <- gamma
+  theta_opt_param <- theta
+  probs <- cbind.data.frame(p.tilde=prob_tilde, greater_half = ifelse(prob_tilde > 0.5, T, F))
+
+  ## Make sure we return the probabilities in the original order
+  probs$orig_order <- 1:nrow(probs)
+
+  ## Convert all probabilities to between 0 and 1/2
+  probs$p_flip <- sapply(probs$p.tilde,  function(p) {
+    if (p > 0.5) {
+      p <- 1-p
+    }
+    return(p)
+  })
+  probs <- probs[order(probs$p_flip),]
+
+  ## Generate basis function / omega matrix from p.tilde
+  # Get Knot Locations
+  probs_flip <- probs$p_flip
+  knot.range <- range(probs$p_flip)
+  quantiles <- seq(knot.range[1]+0.0001, knot.range[2]-0.0001, length = 50)
+
+  # Generate the basis matrix and its correspoding 1st and 2nd deriv's
+  basis_0 <- myns(probs_flip, knots = quantiles, intercept = T, Boundary.knots = knot.range)
+  basis_1 <- myns(probs_flip, knots = quantiles, deriv = 1, intercept = T, Boundary.knots = knot.range)
+  basis_2 <- myns(probs_flip, knots = quantiles, deriv = 2, intercept = T, Boundary.knots = knot.range)
+  basis_sum <- t(basis_0)%*%basis_0
+  sum_b_d1 <- t(basis_1)%*%rep(1,nrow(basis_1))
+
+  # We also want to calculate Omega on a fine grid of points
+  fine_grid <- seq(0, 0.5, by=0.001)
+  basis_fine_grid <- myns(fine_grid, knots = quantiles, intercept = T, Boundary.knots = knot.range)
+  basis_fine_grid_d2 <- myns(fine_grid, knots = quantiles, deriv = 2, intercept = T, Boundary.knots = knot.range)
+  omega <- (1/nrow(basis_fine_grid)) * (t(basis_fine_grid_d2) %*% basis_fine_grid_d2)
+
+  ## Grid for the optimization algorithm
+  pt <- c(seq(10^(-12), 0.5, by = 0.001), 0.5)
+  basis_0.grid <- myns(pt, knots = quantiles, intercept = T, Boundary.knots = knot.range)
+  basis_1.grid <- myns(pt, knots = quantiles, deriv = 1, intercept = T, Boundary.knots = knot.range)
+  basis_sum.grid <- t(basis_0.grid)%*%basis_0.grid
+
+  lambda_opt <- lambda_opt_param
+  gamma_opt <- gamma_opt_param
+  theta_opt <- theta_opt_param
+
+  ##################################
+  #### Adjust the probabilities ####
+  ##################################
+
+  #### Create our adjusted probability estimates
+  p_ecap <- tweedie_est(lambda_opt, gamma_opt, theta_opt, probs$p.tilde, probs$p_flip, pt, probs,
+                         omega, basis_0, basis_1, basis_sum, basis_0.grid, basis_1.grid)
+
+  ## Add in the naive estimate to our adj_prob dataframe
+  prob_adj <- cbind.data.frame(p.tilde=probs$p.tilde, p_ecap=p_ecap, orig_order=probs$orig_order)
+  prob_adj <- prob_adj[order(prob_adj$orig_order), ]
+  prob_adj <- prob_adj[,-3]
+  #
+  # ## Items to return
+  items <- list(ecap_probs = prob_adj$p_ecap,
+                probs = prob_adj)
+
+  return(items)
+}

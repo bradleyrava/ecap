@@ -1,0 +1,607 @@
+##### New ESPN Functin Script
+
+## Functions
+
+## Real Data CAPRE Adjustment Script
+
+## Pacakges Needed
+require(tidyverse)
+require(quadprog)
+require(splines)
+
+##########################
+## Grid's to search over
+#########################
+
+## Some grids for parameter searches
+gamma_grid=seq(0.001, 0.05, by=0.001)
+## Grid of lambda values
+lambda_grid=10^seq(-4, 0, by=0.5)
+## Grid of theta values
+theta_grid=seq(-4, 2, 0.1)
+## Grid of constants for the JS method
+const_grid=seq(0, 1, by = 0.001)
+
+
+## Functions
+myns <- function (x, df = NULL, knots = NULL, intercept = FALSE, 
+                  Boundary.knots = range(x), deriv=0) 
+{
+  nx <- names(x)
+  x <- as.vector(x)
+  nax <- is.na(x)
+  if (nas <- any(nax)) 
+    x <- x[!nax]
+  if (!missing(Boundary.knots)) {
+    Boundary.knots <- sort(Boundary.knots)
+    outside <- (ol <- x < Boundary.knots[1L]) | (or <- x > 
+                                                   Boundary.knots[2L])
+  }
+  else outside <- FALSE
+  if (!is.null(df) && is.null(knots)) {
+    nIknots <- df - 1L - intercept
+    if (nIknots < 0L) {
+      nIknots <- 0L
+      warning(gettextf("'df' was too small; have used %d", 
+                       1L + intercept), domain = NA)
+    }
+    knots <- if (nIknots > 0L) {
+      knots <- seq.int(0, 1, length.out = nIknots + 2L)[-c(1L, 
+                                                           nIknots + 2L)]
+      quantile(x[!outside], knots)
+    }
+  }
+  else nIknots <- length(knots)
+  Aknots <- sort(c(rep(Boundary.knots, 4L), knots))
+  if (any(outside)) {
+    basis <- array(0, c(length(x), nIknots + 4L))
+    if (any(ol)) {
+      k.pivot <- Boundary.knots[1L]
+      xl <- cbind(1, x[ol] - k.pivot)
+      tt <- splineDesign(Aknots, rep(k.pivot, 2L), 4, c(0, 
+                                                        1), derivs=deriv)
+      basis[ol, ] <- xl %*% tt
+    }
+    if (any(or)) {
+      k.pivot <- Boundary.knots[2L]
+      xr <- cbind(1, x[or] - k.pivot)
+      tt <- splineDesign(Aknots, rep(k.pivot, 2L), 4, c(0, 
+                                                        1), derivs=deriv)
+      basis[or, ] <- xr %*% tt
+    }
+    if (any(inside <- !outside)) 
+      basis[inside, ] <- splineDesign(Aknots, x[inside], 
+                                      4, derivs=deriv)
+  }
+  else basis <- splineDesign(Aknots, x, 4, derivs=deriv)
+  const <- splineDesign(Aknots, Boundary.knots, 4, c(2, 2))
+  if (!intercept) {
+    const <- const[, -1, drop = FALSE]
+    basis <- basis[, -1, drop = FALSE]
+  }
+  qr.const <- qr(t(const))
+  basis <- as.matrix((t(qr.qty(qr.const, t(basis))))[, -(1L:2L), 
+                                                     drop = FALSE])
+  n.col <- ncol(basis)
+  if (nas) {
+    nmat <- matrix(NA, length(nax), n.col)
+    nmat[!nax, ] <- basis
+    basis <- nmat
+  }
+  dimnames(basis) <- list(nx, 1L:n.col)
+  a <- list(degree = 3L, knots = if (is.null(knots)) numeric() else knots, 
+            Boundary.knots = Boundary.knots, intercept = intercept)
+  attributes(basis) <- c(attributes(basis), a)
+  class(basis) <- c("ns", "basis", "matrix")
+  basis
+}
+
+## Function used in the cross validation risk min step to obtain lambda 
+risk_cvsplit_fcn <- function(i, partitions, basis_0, basis_1, probs_flip, lambda_grid, pt, omega, basis_0.grid, basis_1.grid) {
+  test.rows <- partitions[[i]]
+  train.rows <- assign_train(i, partitions)
+  b_g <- basis_0[train.rows,]
+  b_g_d1 <- basis_1[train.rows,]
+  p_train <- probs_flip[train.rows]
+  
+  # I can do the below without thinking about lambda because it doesn't depend on it (only on test and train).
+  # Calculate every term in the sum
+  basis_sum_train <- t(b_g)%*%b_g
+  
+  # calculate the column wise sum of our the first derivative of our basis matrix
+  sum_b_d1 <- t(b_g_d1)%*%rep(1,nrow(b_g_d1))
+  
+  # Now, we need to do this inversion for every value of lambda
+  eta_g <- matrix(nrow = ncol(b_g), ncol = length(lambda_grid))
+  for (ii in 1:length(lambda_grid)) {
+    l <- lambda_grid[ii]
+    ## Note the argument of gamma here is redundant without running the full QP
+    eta_g[,ii] <- eta_min_fcn(l, 0.1, p_train, pt, omega, b_g, b_g_d1, basis_sum_train, basis_0.grid, basis_1.grid)
+  }
+  
+  # Now, let's consider the test data
+  b_g_test <- basis_0[test.rows,]
+  b_g_d1_test <- basis_1[test.rows,]
+  p_test <- probs_flip[test.rows]
+  n <- nrow(b_g_test)
+  
+  # We just need to calculate the basis sum part again.
+  basis_sum <- t(b_g_test)%*%b_g_test
+  
+  # Now, we can calculate the risk where eta was calculatd on our test data and we take the
+  # basis matrix to calculate the score function from our test data
+  one_vector <- as.vector(t(rep(1, nrow(b_g_test))))
+  
+  # Returns a vector of the risk for every value of lambda for a single test and train dataset
+  risk_hat <- apply(eta_g, 2, function(eta) {
+    g_hat <- b_g_test%*%eta
+    g_hat_d1 <- b_g_d1_test%*%eta
+    return((1/n)*sum(g_hat^2)+(2/n)*sum(g_hat*(1-2*p_test)+
+                                          p_test*(1-p_test)*g_hat_d1))
+  })
+  # We now want to loop over this for all permutations of our cross validation
+  return(risk_hat)
+}
+
+tweed.adj.fcn <- function(lambda, gamma, theta, p.tilde, p_flip, pt, probs, omega, basis_0, basis_1, basis_sum, basis_0.grid, basis_1.grid, 
+                          win_index, lose_index) {
+  eta_hat <- eta_min_fcn(lambda, gamma, p_flip, pt, omega, basis_0, basis_1, basis_sum, basis_0.grid, basis_1.grid)
+  g_hat <- basis_0%*%eta_hat
+  g_hat_d1 <- basis_1%*%eta_hat
+  
+  mu_hat <-  p_flip + gamma*(g_hat + 1 - 2*p_flip)
+  sigma2_hat <- gamma*p_flip*(1-p_flip) + gamma^2*p_flip*(1-p_flip)*(g_hat_d1-2)
+  
+  exp_p_hat <- mu_hat + 0.5*theta*(-mu_hat-6*mu_hat*sigma2_hat-2*mu_hat^3+3*sigma2_hat+3*mu_hat^2)
+  var_p_hat <- (1-0.5*theta)^2*sigma2_hat + theta*sigma2_hat*(9*mu_hat^4*theta-18*mu_hat^3*theta+
+                                                                9*mu_hat^2*theta-(1-theta/2)*(3*mu_hat^2-3*mu_hat))
+  
+  p.hat <- sapply((exp_p_hat + var_p_hat/exp_p_hat), function(uu) {min(uu,0.5)})
+  ifelse(sum(p.hat<0)>0, p.hat <- p_flip, p.hat <- p.hat)
+  
+  # Flip back
+  greater <- which(p.tilde > 0.5)
+  p.hat[greater] <- 1-p.hat[greater]
+  
+  Q.gamma <- mle_binomial(p.hat, win_index, lose_index)
+  
+  return(Q.gamma)
+}
+
+eta_min_fcn <- function(lambda, gamma, p.tilde, pt, omega, basis_0, basis_1, basis_sum, basis_0.grid, basis_1.grid) {
+  ## Define vars used below
+  n <- nrow(basis_1)
+  n_grid <- nrow(basis_1.grid)
+  p_tilde <- p.tilde
+  end_row <- which(pt == 0.5)
+  
+  ## Set up into the correct form
+  Dmat <- 2*((1/n) * basis_sum + lambda * omega)
+  dvec_terms <-  (1-2*p_tilde)*basis_0 + (p_tilde*(1-p_tilde))*basis_1
+  dvec <- -(2/n)*colSums(dvec_terms)
+  
+  ## Constraint vectors
+  b.vec1 <- 0
+  bvec <- b.vec1
+  
+  Amat.part1 <- basis_0.grid[end_row,]
+  Amat <- as.matrix(Amat.part1)
+  
+  return(solve.QP(Dmat, dvec, Amat, bvec, meq=1)$solution)
+}
+
+## Criterion for the MLE case
+mle_binomial <- function(est, win_index, lose_index) {
+  # Calculate wins with true p
+  log.term <- sum(log(est[win_index]))
+  minus.log.term <- sum(log(1-est[lose_index]))
+  sum <- log.term+minus.log.term
+  return(sum)
+}
+
+## If p>0.5, return 1-p
+pFlip <- function(p) {
+  if (p > 0.5) {
+    p <- 1-p
+  }
+  return(p)
+}
+
+## Generate CAPRE Estimates from a given lambda, gamma and theta
+tweedie_est <- function(lambda, gamma, theta, p.tilde, p_flip, pt, probs, omega, basis_0, basis_1, basis_sum, 
+                        basis_0.grid, basis_1.grid) {
+  eta_hat <- eta_min_fcn(lambda, gamma, p_flip, pt, omega, basis_0, basis_1, basis_sum, basis_0.grid, basis_1.grid)
+  g_hat <- basis_0%*%eta_hat
+  g_hat_d1 <- basis_1%*%eta_hat
+  
+  mu_hat <-  p_flip + gamma*(g_hat + 1 - 2*p_flip)
+  sigma2_hat <- gamma*p_flip*(1-p_flip) + gamma^2*p_flip*(1-p_flip)*(g_hat_d1-2)
+  
+  exp_p_hat <- mu_hat + 0.5*theta*(-mu_hat-6*mu_hat*sigma2_hat-2*mu_hat^3+3*sigma2_hat+3*mu_hat^2)
+  var_p_hat <- (1-0.5*theta)^2*sigma2_hat + theta*sigma2_hat*(9*mu_hat^4*theta-18*mu_hat^3*theta+
+                                                                9*mu_hat^2*theta-(1-theta/2)*(3*mu_hat^2-3*mu_hat))
+  
+  p.hat <- sapply((exp_p_hat + var_p_hat/exp_p_hat), function(uu) {min(uu, 0.5)})
+  
+  # Flip back
+  greater <- which(p.tilde > 0.5)
+  p.hat[greater] <- 1-p.hat[greater]
+  
+  return(p.hat)
+}
+
+# Create function that assigns the train rows after test rows have been chosen.
+assign_train <- function(test_index, partitions) {
+  partitions_train <- partitions 
+  partitions_train[test_index] <- NA
+  partitions_train <- unlist(partitions_train)
+  partitions_train <- partitions_train[!is.na(partitions_train)]
+  return(partitions_train)
+}
+
+## Function to produce the james stein estimate for a given value of sigma
+JS_sigma <- function(p.tilde, p_flip, const) {
+  ## Identify which p.tilde's we are going to flip
+  greater <- which(p.tilde > 0.5)
+  ## Parameters for the JS method
+  M.hat <- mean(p_flip)
+  n <- length(p_flip)
+  js <- M.hat + (1-const) * (p_flip-M.hat)
+  ## Flip back
+  js[greater] <- 1-js[greater]
+  
+  return(js)
+}
+
+## Function for iterating over different values of C to get a good JS estimate
+js_grid_fcn <- function(c, p.tilde, p_flip, win_index, lose_index) {
+  ## Generate the JS probs
+  probs.js <- JS_sigma(p.tilde, p_flip, c)
+  terms <- mle_binomial(probs.js, win_index, lose_index)
+  return(terms)
+}
+
+tweedie_adj <- function(prob_tilde, win_var, win_id, bias_indicator = F, lambda_opt_param=NA, gamma_opt_param=NA) {
+  probs <- cbind.data.frame(p.tilde=prob_tilde, greater_half = ifelse(prob_tilde > 0.5, T, F), win_var = win_var)
+  
+  ## Make sure we return the probabilities in the original order
+  probs$orig_order <- 1:nrow(probs)
+  
+  ## Convert all probabilities to between 0 and 1/2
+  probs$p_flip <- sapply(probs$p.tilde, pFlip)
+  probs <- probs[order(probs$p_flip),]
+  
+  ## For MLE Later -- obtain the win variable
+  win_index <- which(probs$win_var == win_id)
+  lose_index <- (1:length(win_var))[-win_index]
+  
+  ## Generate basis function / omega matrix from p.tilde
+  # Get Knot Locations
+  probs_flip <- probs$p_flip
+  knot.range <- range(probs$p_flip)
+  quantiles <- seq(knot.range[1]+0.0001, knot.range[2]-0.0001, length = 50)
+  
+  # Generate the basis matrix and its correspoding 1st and 2nd deriv's
+  basis_0 <- myns(probs_flip, knots = quantiles, intercept = T, Boundary.knots = knot.range)
+  basis_1 <- myns(probs_flip, knots = quantiles, deriv = 1, intercept = T, Boundary.knots = knot.range)
+  basis_2 <- myns(probs_flip, knots = quantiles, deriv = 2, intercept = T, Boundary.knots = knot.range)
+  basis_sum <- t(basis_0)%*%basis_0
+  sum_b_d1 <- t(basis_1)%*%rep(1,nrow(basis_1))
+  
+  # We also want to calculate Omega on a fine grid of points
+  fine_grid <- seq(0, 0.5, by=0.001)
+  basis_fine_grid <- myns(fine_grid, knots = quantiles, intercept = T, Boundary.knots = knot.range)
+  basis_fine_grid_d2 <- myns(fine_grid, knots = quantiles, deriv = 2, intercept = T, Boundary.knots = knot.range)
+  omega <- (1/nrow(basis_fine_grid)) * (t(basis_fine_grid_d2) %*% basis_fine_grid_d2)
+  
+  ## Grid for the optimization algorithm
+  pt <- c(seq(10^(-12), 0.5, by = 0.001), 0.5)
+  basis_0.grid <- myns(pt, knots = quantiles, intercept = T, Boundary.knots = knot.range)
+  basis_1.grid <- myns(pt, knots = quantiles, deriv = 1, intercept = T, Boundary.knots = knot.range)
+  basis_sum.grid <- t(basis_0.grid)%*%basis_0.grid
+  
+  #### Adjustment 1: Risk function for lambda and grid for gamma. True p ####
+  ## CV SET UP to get min value of lambda from risk function
+  # Randomize the rows
+  rows <- 1:nrow(basis_0)
+  rows_rand <- rows[sample(rows)]
+  
+  ## Declate the number of groups that we want
+  n.group <- 10
+  ## Return a list with 10 approx equal vectors of rows. 
+  partitions <- split(rows_rand,
+                      cut(rows_rand,quantile(rows_rand,(0:n.group)/n.group),
+                          include.lowest=TRUE, labels=FALSE))
+  
+  for(jjj in 1:n.group) { 
+    partitions[[jjj]] <- rows_rand[partitions[[jjj]]] 
+  }
+  
+  ### Here we are going to pick the best value of lambda through cross validation
+  risk_cvsplit <- lapply(1:n.group, function(j) {
+    return(risk_cvsplit_fcn(j, partitions, basis_0, basis_1, probs$p_flip, lambda_grid, pt, omega, basis_0.grid, basis_1.grid))
+  })
+  
+  r_cv_split_matrix <- do.call(cbind, risk_cvsplit)
+  r_cv_split_vec <- apply(r_cv_split_matrix, 1, mean)
+  names(r_cv_split_vec) <- lambda_grid
+  
+  ## Get the value of lambda that corresponds to the smallest risk
+  lambda_opt <- lambda_grid[which.min(r_cv_split_vec)]
+  if (is.na(lambda_opt_param) == F) {
+    lambda_opt <- lambda_opt_param
+  }
+  
+  ## 2D grid search for gamma and theta (1D if user specifies there is no bias)
+  if (bias_indicator == F) {
+    theta_grid <- 0
+  }
+  ## Iterate over every value of lambda and theta
+  gamma_theta_matrix <- matrix(NA, ncol=length(theta_grid), nrow=length(gamma_grid))
+  colnames(gamma_theta_matrix) <- theta_grid
+  rownames(gamma_theta_matrix) <- gamma_grid
+  
+  for (i in 1:length(gamma_grid)) {
+    g <- gamma_grid[i]
+    for (j in 1:length(theta_grid)) {
+      t <- theta_grid[j]
+      score <- tweed.adj.fcn(lambda_opt, g, t, probs$p.tilde, probs$p_flip, pt, 
+                             probs, omega, basis_0, basis_1, basis_sum, basis_0.grid,
+                             basis_1.grid, win_index, lose_index)
+      gamma_theta_matrix[i,j] <- score
+    }
+  }
+  
+  ## Get the value of gamma and theta that maximized the MLE
+  max_pair <- which(gamma_theta_matrix == max(gamma_theta_matrix), arr.ind = TRUE)
+  gamma_opt <- gamma_grid[max_pair[1]]
+  if (is.na(gamma_opt_param) == F) {
+    gamma_opt <- gamma_opt_param
+  }
+  theta_opt <- theta_grid[max_pair[2]]
+  ###################
+  #### JS Method #### 
+  ###################
+  
+  gridsearch.js <- sapply(const_grid, function(c) js_grid_fcn(c, probs$p.tilde, probs$p_flip, win_index, lose_index))
+  
+  ## Pick the value of C for each method
+  const_min <- const_grid[which.max(gridsearch.js)]
+  
+  ##################################
+  #### Adjust the probabilities ####
+  ##################################
+  
+  #### Create our adjusted probability estimates
+  p_capre <- tweedie_est(lambda_opt, gamma_opt, theta_opt, probs$p.tilde, probs$p_flip, pt, probs, 
+                         omega, basis_0, basis_1, basis_sum, basis_0.grid, basis_1.grid)
+  
+  
+  ## Add in the naive estimate to our adj_prob dataframe
+  prob_adj <- cbind.data.frame(p.tilde=probs$p.tilde, p_capre=p_capre, probs$win_var, orig_order=probs$orig_order)
+  prob_adj <- prob_adj[order(prob_adj$orig_order), ]
+  # 
+  # ## Items to return
+  items <- list(p_capre = prob_adj$p_capre,
+                probs = prob_adj,
+                gamma_opt = gamma_opt,
+                lambda_opt = lambda_opt,
+                theta_opt = theta_opt)
+  
+  return(items)
+}
+
+########################
+
+#### Here we will generate the plot
+## Plt fcn
+gen_empirical <- function(p.tilde, p.tilde2, ll, lu, ul, uu, win_var, win_var2, win_id, bias_indicator = F) {
+  
+  ## Get the user defined p.tilde and win variable
+  prob_df <- list(cbind.data.frame(p.tilde=p.tilde, home_win = win_var),
+                  cbind.data.frame(p.tilde=p.tilde2, home_win=win_var2))
+  
+  ## Get the CAPRE estimate and win variable
+  tweedie_adj_probs <- list(cbind.data.frame(p.tilde=p.tilde, home_win = win_var),
+                            cbind.data.frame(p.tilde=p.tilde2, home_win=win_var2))
+  
+  ## No split, No Bootstrapping
+  violation_naive <- avg_violation(prob_df, ll, lu, ul, uu, split_indicator = F, boot_indicator = F, bias_indicator = F)
+  ## Yes split, No Bootstrapping
+  violation_tweedie <- avg_violation(tweedie_adj_probs, ll, lu, ul, uu, split_indicator = T, boot_indicator = F, bias_indicator = F)
+  
+  ## No split, Yes Bootstrapping
+  violation_naive_ci <- avg_violation(prob_df, ll, lu, ul, uu, split_indicator = F, boot_indicator = T, bias_indicator = F)
+  ## Yes split, Yes Bootstrapping
+  violation_tweedie_ci <- avg_violation(tweedie_adj_probs, ll, lu, ul, uu, split_indicator = T, boot_indicator = T, bias_indicator = F)
+  
+  
+  obs_dta_naive <- violation_naive$Z
+  obs_dta_tweedie <- violation_tweedie$Z
+  
+  obs_dta_naive_ci <- violation_naive_ci$Z
+  obs_dta_tweedie_ci <- violation_tweedie_ci$Z
+  
+  items <- cbind.data.frame(obs_dta_naive, obs_dta_tweedie, obs_dta_naive_ci, obs_dta_tweedie_ci, naive_pbar=violation_naive$p_bar, 
+                            naive_C=violation_naive$C, n_delta=violation_naive$n_delta)
+  
+  return(items)
+}
+
+avg_violation <- function(prob_df, ll, lu, ul, uu, split_indicator=T, boot_indicator=T, bias_indicator=F) {
+  ## This one is the 2016
+  prob_df1 <- prob_df[[1]]
+  bucket_index_low <- which(prob_df1$p.tilde >= ll & prob_df1$p.tilde <= lu)
+  bucket_index_high <- which(prob_df1$p.tilde >= ul & prob_df1$p.tilde <= uu)
+  
+  ## This one is the 2017 
+  prob_df2 <- prob_df[[2]]
+  bucket_index2_low <- which(prob_df2$p.tilde >= ll & prob_df2$p.tilde <= lu)
+  bucket_index2_high <- which(prob_df2$p.tilde >= ul & prob_df2$p.tilde <= uu)
+  
+  
+  if (boot_indicator==T) {
+    ## Bootstrapping
+    # Index 1
+    bucket_index_low_boot <- sample(bucket_index_low, length(bucket_index_low), replace = T)
+    bucket_index_high_boot <-sample(bucket_index_high, length(bucket_index_high), replace = T)
+    # Index 2
+    bucket_index2_low_boot <- sample(bucket_index2_low, length(bucket_index2_low), replace = T)
+    bucket_index2_high_boot <-sample(bucket_index2_high, length(bucket_index2_high), replace = T)
+    
+    prob_df_all <- rbind.data.frame(prob_df1[unique(union(bucket_index_low_boot, bucket_index_high_boot)),],
+                                    prob_df2[unique(union(bucket_index2_low_boot, bucket_index2_high_boot)),])
+  }
+  else if (boot_indicator==F) {
+    # Index 1
+    bucket_index_low_boot <- bucket_index_low
+    bucket_index_high_boot <- bucket_index_high
+    # Index 2
+    bucket_index2_low_boot <- bucket_index2_low
+    bucket_index2_high_boot <- bucket_index2_high
+    
+    prob_df_all <- rbind.data.frame(prob_df1[unique(union(bucket_index_low_boot, bucket_index_high_boot)),],
+                                    prob_df2[unique(union(bucket_index2_low_boot, bucket_index2_high_boot)),])
+  }
+  
+  
+  if (split_indicator == T) {
+    rep_its <- replicate(100, {
+      p_tilde <- prob_df1$p.tilde
+      win_var <- prob_df1$home_win
+      ## Half the games to get the tuning parameters
+      param_rows <- sample(1:length(p_tilde), floor(0.5*length(p_tilde)))
+      est_rows <- (1:length(p_tilde))[-param_rows]
+      
+      rand_p <- p_tilde[param_rows]
+      win_var_rand <- win_var[param_rows]
+      est_p <- p_tilde[est_rows]
+      win_var_est <- win_var[est_rows]
+      
+      adjust_info <- tweedie_adj(rand_p, win_var_rand, 1, bias_indicator = bias_indicator,
+                                 gamma_opt_param = NA, lambda_opt_param = NA)
+      gamma_param <- adjust_info$gamma_opt
+      lambda_param <- adjust_info$lambda_opt
+      
+      ecap <- tweedie_adj(est_p, win_var_est, 1, bias_indicator = bias_indicator,
+                          lambda_opt_param = lambda_param, gamma_opt_param = gamma_param)[[1]]
+      
+      bucket_index_low_boot <- which(est_p >= ll & est_p <= lu)
+      bucket_index_high_boot <- which(est_p >= ul & est_p <= uu)
+      
+      ####################################
+      ## This vector is the wrong size!!!
+      ####################################
+      
+      ## Take in probs and return Z and C
+      ## Average of probs less than lower thresh
+      lower_avg <- mean(ecap[bucket_index_low_boot])
+      
+      ## Average of probs greater than upper thresh
+      upper_avg <- mean(ecap[bucket_index_high_boot])
+      
+      ## Get table of extreme probs
+      summary_dta1 <- prob_df_all[which(prob_df_all$p.tilde >= ul & prob_df_all$p.tilde <= uu),]
+      tbl_up <- table(factor(summary_dta1$home_win, levels = 0:1))
+      
+      summary_dta2 <- prob_df_all[which(prob_df_all$p.tilde >= ll & prob_df_all$p.tilde <= lu),]
+      tbl_low <- table(factor(summary_dta2$home_win, levels = 0:1))
+      
+      ## Compute observed probs & Conf Int
+      
+      ## Conf Int ##
+      n_delta <- length(bucket_index_low) + length(bucket_index_high) + 
+        length(bucket_index2_low) + length(bucket_index2_high)
+      n_x <- sum(tbl_up)
+      n_y <- sum(tbl_low)
+      #p_x <- tbl_up[1] / n_x
+      #p_y <- tbl_low[2] / n_y
+      
+      ## C is the expected number of wins and losses
+      C <- (lower_avg*length(bucket_index_low_boot) +(1-upper_avg)*length(bucket_index_high_boot)) / 
+        (length(bucket_index_high_boot)+length(bucket_index_low_boot))
+      
+      ## Z is EC Hat
+      Z <- ((tbl_up[1]+tbl_low[2]) / (n_x+n_y) - C) / C
+      Z_var <- (1-C) / (C*(n_x+n_y))
+      Z_sd <- sqrt(Z_var)
+      
+      p_bar <- ((tbl_up[1]+tbl_low[2]) / (n_x+n_y))
+      
+      return(c(C=C, Z=Z, Z_sd=Z_sd, n_x=n_x, n_y=n_y, p_bar=p_bar, n_delta=n_delta))
+    })
+    avg_reps <- rowMeans(rep_its)
+    C <- avg_reps[1]
+    Z <- avg_reps[2]
+    Z_sd <- avg_reps[3]
+    n_x <- avg_reps[4]
+    n_y <- avg_reps[5]
+    p_bar <- avg_reps[6]
+    n_delta <- avg_reps[7]
+  }
+  
+  else if (split_indicator == F) {
+    ## Take in probs and return Z and C
+    ## Average of probs less than lower thresh
+    lower_avg <- mean(prob_df1$p.tilde[bucket_index_low_boot])
+    
+    ## Average of probs greater than upper thresh
+    upper_avg <- mean(prob_df1$p.tilde[bucket_index_high_boot])
+    
+    ## Get table of extreme probs
+    summary_dta1 <- prob_df_all[which(prob_df_all$p.tilde >= ul & prob_df_all$p.tilde <= uu),]
+    tbl_up <- table(factor(summary_dta1$home_win, levels = 0:1))
+    
+    summary_dta2 <- prob_df_all[which(prob_df_all$p.tilde >= ll & prob_df_all$p.tilde <= lu),]
+    tbl_low <- table(factor(summary_dta2$home_win, levels = 0:1))
+    
+    ## Compute observed probs & Conf Int
+    
+    ## Conf Int ##
+    n_delta <- length(bucket_index_low) + length(bucket_index_high) + 
+      length(bucket_index2_low) + length(bucket_index2_high)
+    n_x <- sum(tbl_up)
+    n_y <- sum(tbl_low)
+    #p_x <- tbl_up[1] / n_x
+    #p_y <- tbl_low[2] / n_y
+    
+    ## C is the expected number of wins and losses
+    C <- (lower_avg*length(bucket_index_low_boot) +(1-upper_avg)*length(bucket_index_high_boot)) / 
+      (length(bucket_index_high_boot)+length(bucket_index_low_boot))
+    
+    ## Z is EC Hat
+    Z <- ((tbl_up[1]+tbl_low[2]) / (n_x+n_y) - C) / C
+    Z_var <- (1-C) / (C*(n_x+n_y))
+    Z_sd <- sqrt(Z_var)
+    
+    p_bar <- ((tbl_up[1]+tbl_low[2]) / (n_x+n_y))
+  }
+  
+  info <- list(C=C, Z=Z, Z_sd=Z_sd, n_x=n_x, n_y=n_y, p_bar=p_bar, n_delta=n_delta)
+  return(info)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
