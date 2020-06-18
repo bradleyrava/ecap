@@ -2,7 +2,7 @@
 % Please edit documentation in R/ecap.R
 \name{predict.ecap}
 \alias{predict.ecap}
-\title{Implimenting the ECAP procedure}
+\title{Implementing the ECAP procedure}
 \usage{
 \method{predict}{ecap}(x, new_unadjusted)
 }
@@ -17,6 +17,5 @@ calibration from the ecap object to ECAP adjust the new probability estimates gi
 http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 }
 \author{
-Bradley Rava. PhD Candidate at the University of Southern California's Marshall School of Business.
-Department of Data Sciences and Operations.
+Bradley Rava, Peter Radchenko and Gareth M. James.
 }

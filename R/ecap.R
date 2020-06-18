@@ -15,8 +15,7 @@
 #' @return An ecap object that can be used to adjust new probability estimates. It contains all of the tuning parameters needed to calibrate
 #' ECAP as well as diagnostic information on the estimate of g. The probabilities used to calibrate ECAP have also been ECAP corrected and
 #' are given as part of the output.
-#' @author Bradley Rava. PhD Candidate at the University of Southern California's Marshall School of Business.
-#' Department of Data Sciences and Operations.
+#' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @export
 ecap <- function(unadjusted_prob, win_var, win_id, bias_indicator = F, lambda_grid=10^seq(-6, 0, by=0.5),
@@ -172,8 +171,7 @@ ecap <- function(unadjusted_prob, win_var, win_id, bias_indicator = F, lambda_gr
 #'
 #' @x An object of class ecap.
 #' @digits The number of significant digits that should be displayed.
-#' @author Bradley Rava. PhD Candidate at the University of Southern California's Marshall School of Business.
-#' Department of Data Sciences and Operations.
+#' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @export
 print.ecap <- function(x, digits=4)
@@ -197,8 +195,7 @@ print.ecap <- function(x, digits=4)
 #'
 #' @x An object of class ecap.
 #' @digits The number of significant digits that should be displayed.
-#' @author Bradley Rava. PhD Candidate at the University of Southern California's Marshall School of Business.
-#' Department of Data Sciences and Operations.
+#' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @export
 summary.ecap <- function(x, digits=4) {
@@ -262,12 +259,11 @@ summary.ecap <- function(x, digits=4) {
 #' Plotting ECAP Object
 #'
 #' Plots diagnostic information of an ECAP object. Two plots are produced. The first plot displays the estimate of the
-#' function g that the ecap procedure produced. The second compares the unadjusted probabiltiy estimates to the ECAP adjusted
+#' function g that the ecap procedure produced. The second compares the unadjusted probability estimates to the ECAP adjusted
 #' probability estimates that were used to train the model.
 #'
 #' @x An object of class ecap.
-#' @author Bradley Rava. PhD Candidate at the University of Southern California's Marshall School of Business.
-#' Department of Data Sciences and Operations.
+#' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @export
 plot.ecap <- function(x) {
@@ -291,14 +287,13 @@ plot.ecap <- function(x) {
   return(plot_return)
 }
 
-#' Implimenting the ECAP procedure
+#' Implementing the ECAP procedure
 #'
 #' Takes in an ECAP object and a new set of probability estimates that the user wishes to adjust. The model uses the
 #' calibration from the ecap object to ECAP adjust the new probability estimates given to the function predict.
 #' @return A vector of ECAP adjusted probability estimates.
 #' @x An object of class ecap.
-#' @author Bradley Rava. PhD Candidate at the University of Southern California's Marshall School of Business.
-#' Department of Data Sciences and Operations.
+#' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @export
 predict.ecap <- function(x, new_unadjusted) {

@@ -15,6 +15,5 @@ The grid can be adjusted in the ecap function.
 http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 }
 \author{
-Bradley Rava. PhD Candidate at the University of Southern California's Marshall School of Business.
-Department of Data Sciences and Operations.
+Bradley Rava, Peter Radchenko and Gareth M. James.
 }
