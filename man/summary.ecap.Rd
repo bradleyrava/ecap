@@ -6,6 +6,11 @@
 \usage{
 \method{summary}{ecap}(x, digits = 4)
 }
+\arguments{
+\item{x}{An object of class ecap.}
+
+\item{digits}{The number of significant digits that should be displayed.}
+}
 \description{
 Prints summary information about the calibration of an ECAP object.
 *** Denotes that one of the parameter estimates has hit the end of the given grid of tuning parameters.

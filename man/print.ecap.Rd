@@ -6,6 +6,11 @@
 \usage{
 \method{print}{ecap}(x, digits = 4)
 }
+\arguments{
+\item{x}{An object of class ecap.}
+
+\item{digits}{The number of significant digits that should be displayed.}
+}
 \description{
 Prints summary information about the ECAP object
 }

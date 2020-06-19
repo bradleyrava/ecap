@@ -34,7 +34,7 @@ myns <- function (x, df = NULL, knots = NULL, intercept = FALSE,
     if (any(ol)) {
       k.pivot <- Boundary.knots[1L]
       xl <- cbind(1, x[ol] - k.pivot)
-      tt <- splineDesign(Aknots, rep(k.pivot, 2L), 4, c(0,
+      tt <- splines::splineDesign(Aknots, rep(k.pivot, 2L), 4, c(0,
                                                         1), derivs=deriv)
       basis[ol, ] <- xl %*% tt
     }
@@ -164,7 +164,7 @@ eta_min_fcn <- function(lambda, gamma, p.tilde, pt, omega, basis_0, basis_1, bas
   Amat.part1 <- basis_0.grid[end_row,]
   Amat <- as.matrix(Amat.part1)
 
-  return(solve.QP(Dmat, dvec, Amat, bvec, meq=1)$solution)
+  return(quadprog::solve.QP(Dmat, dvec, Amat, bvec, meq=1)$solution)
 }
 
 mle_binomial <- function(est, win_index, lose_index) {

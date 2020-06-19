@@ -6,6 +6,11 @@
 \usage{
 \method{predict}{ecap}(x, new_unadjusted)
 }
+\arguments{
+\item{x}{An object of class ecap.}
+
+\item{new_unadjusted}{A numerical vector of unadjusted probabilities that you want to ECAP adjust.}
+}
 \value{
 A vector of ECAP adjusted probability estimates.
 }

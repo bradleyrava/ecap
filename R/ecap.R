@@ -7,11 +7,11 @@
 #'
 #' @param unadjusted_prob Numeric vector of probability estimates that you want estimate the ECAP parameters from.
 #' @param win_var A binary vector of wins and losses that correspond to the probabilities in the unadjusted_prob vector
-#' @param win_id A value that denotes a "win" in the win_var vector.
+#' @param win_id A value that denotes a "win" (or if the event occured) in the win_var vector.
 #' @param bias_indicator Set this equal to F if you don't want to consider bias in your estimation. Set it equal to T if you do.
-#' @lambda_grid This is already predefined. However, you can adjust the grid of tuning parameters lambda that ECAP searches over if needed.
-#' @gamma_grid This is already predefined. However, you can adjust the grid of gamma that ECAP searches over if needed.
-#' @theta_grid This is already predefined. However, you can adjust the grid of theta that ECAP searches over if needed.
+#' @param lambda_grid This is already predefined. However, you can adjust the grid of tuning parameters lambda that ECAP searches over if needed.
+#' @param gamma_grid This is already predefined. However, you can adjust the grid of gamma that ECAP searches over if needed.
+#' @param theta_grid This is already predefined. However, you can adjust the grid of theta that ECAP searches over if needed.
 #' @return An ecap object that can be used to adjust new probability estimates. It contains all of the tuning parameters needed to calibrate
 #' ECAP as well as diagnostic information on the estimate of g. The probabilities used to calibrate ECAP have also been ECAP corrected and
 #' are given as part of the output.
@@ -169,8 +169,8 @@ ecap <- function(unadjusted_prob, win_var, win_id, bias_indicator = F, lambda_gr
 #'
 #' Prints summary information about the ECAP object
 #'
-#' @x An object of class ecap.
-#' @digits The number of significant digits that should be displayed.
+#' @param x An object of class ecap.
+#' @param digits The number of significant digits that should be displayed.
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @export
@@ -193,8 +193,8 @@ print.ecap <- function(x, digits=4)
 #' *** Denotes that one of the parameter estimates has hit the end of the given grid of tuning parameters.
 #' The grid can be adjusted in the ecap function.
 #'
-#' @x An object of class ecap.
-#' @digits The number of significant digits that should be displayed.
+#' @param x An object of class ecap.
+#' @param digits The number of significant digits that should be displayed.
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @export
@@ -262,24 +262,24 @@ summary.ecap <- function(x, digits=4) {
 #' function g that the ecap procedure produced. The second compares the unadjusted probability estimates to the ECAP adjusted
 #' probability estimates that were used to train the model.
 #'
-#' @x An object of class ecap.
+#' @param x An object of class ecap.
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @export
 plot.ecap <- function(x) {
   ## Plot of estimate of g()
   plot_data <- cbind.data.frame(p_tilde=sort(x$unadjusted_flip), g_hat=x$g_hat)
-  g_hat_plot <- ggplot(plot_data, aes(x=p_tilde, y=g_hat)) +
-    geom_line() + xlab("Unadjusted probabilities flipped between 0 and 0.5") +
-    ylab("Estimate of g") + ggtitle("Estimate of g on the unadjusted probabilities") +
-    theme_minimal()
+  g_hat_plot <- ggplot2::ggplot(plot_data, aes(x=p_tilde, y=g_hat)) +
+    ggplot2::geom_line() + ggplot2::xlab("Unadjusted probabilities flipped between 0 and 0.5") +
+    ggplot2::ylab("Estimate of g") + ggplot2::ggtitle("Estimate of g on the unadjusted probabilities") +
+    ggplot2::theme_minimal()
 
   ## Plot of the unadjusted and training ecap probabilities
   plot_data2 <- cbind.data.frame(p=c(x$unadjusted_prob, x$ecap_training_probabilities),
                                  adjustment_type=factor(rep(c("Unadjusted", "ECAP Training"), each=length(x$unadjusted_prob))))
-  probs_plot <- ggplot(plot_data2, aes(x=p, color=adjustment_type)) +
-    geom_line(stat="density") + theme_minimal() + scale_color_manual(values=c("#009E73","#D55E00")) +
-    ggtitle("Density of unadjusted probabilities against the training ECAP adjusted") + xlab("Probability")
+  probs_plot <- ggplot2::ggplot(plot_data2, aes(x=p, color=adjustment_type)) +
+    ggplot2::geom_line(stat="density") + ggplot2::theme_minimal() + ggplot2::scale_color_manual(values=c("#009E73","#D55E00")) +
+    ggplot2::ggtitle("Density of unadjusted probabilities against the training ECAP adjusted") + xlab("Probability")
 
   ## Return object
   plot_return <- list(g_hat_plot, probs_plot)
@@ -292,7 +292,8 @@ plot.ecap <- function(x) {
 #' Takes in an ECAP object and a new set of probability estimates that the user wishes to adjust. The model uses the
 #' calibration from the ecap object to ECAP adjust the new probability estimates given to the function predict.
 #' @return A vector of ECAP adjusted probability estimates.
-#' @x An object of class ecap.
+#' @param x An object of class ecap.
+#' @param new_unadjusted A numerical vector of unadjusted probabilities that you want to ECAP adjust.
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @export

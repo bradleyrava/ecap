@@ -19,9 +19,15 @@ ecap(
 
 \item{win_var}{A binary vector of wins and losses that correspond to the probabilities in the unadjusted_prob vector}
 
-\item{win_id}{A value that denotes a "win" in the win_var vector.}
+\item{win_id}{A value that denotes a "win" (or if the event occured) in the win_var vector.}
 
 \item{bias_indicator}{Set this equal to F if you don't want to consider bias in your estimation. Set it equal to T if you do.}
+
+\item{lambda_grid}{This is already predefined. However, you can adjust the grid of tuning parameters lambda that ECAP searches over if needed.}
+
+\item{gamma_grid}{This is already predefined. However, you can adjust the grid of gamma that ECAP searches over if needed.}
+
+\item{theta_grid}{This is already predefined. However, you can adjust the grid of theta that ECAP searches over if needed.}
 }
 \value{
 An ecap object that can be used to adjust new probability estimates. It contains all of the tuning parameters needed to calibrate
