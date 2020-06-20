@@ -4,12 +4,14 @@
 \alias{predict.ecap}
 \title{Implementing the ECAP procedure}
 \usage{
-\method{predict}{ecap}(x, new_unadjusted)
+\method{predict}{ecap}(x, new_unadjusted, ...)
 }
 \arguments{
 \item{x}{An object of class ecap.}
 
 \item{new_unadjusted}{A numerical vector of unadjusted probabilities that you want to ECAP adjust.}
+
+\item{...}{Additional arguments}
 }
 \value{
 A vector of ECAP adjusted probability estimates.
@@ -17,6 +19,15 @@ A vector of ECAP adjusted probability estimates.
 \description{
 Takes in an ECAP object and a new set of probability estimates that the user wishes to adjust. The model uses the
 calibration from the ecap object to ECAP adjust the new probability estimates given to the function predict.
+}
+\examples{
+set.seed(1)
+p_obs <- runif(1000, 0, 1)
+win_var <- rbinom(length(p_obs), 1, p_obs)
+ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
+
+p_new <- runif(1000, 0, 1)
+ecap_new <- predict(x=ecap_fit, new_unadjusted=p_new)
 }
 \references{
 http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf

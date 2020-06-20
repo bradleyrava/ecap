@@ -4,17 +4,26 @@
 \alias{summary.ecap}
 \title{Summary of ECAP Object}
 \usage{
-\method{summary}{ecap}(x, digits = 4)
+\method{summary}{ecap}(x, digits, ...)
 }
 \arguments{
 \item{x}{An object of class ecap.}
 
 \item{digits}{The number of significant digits that should be displayed.}
+
+\item{...}{Additional arguments}
 }
 \description{
 Prints summary information about the calibration of an ECAP object.
 *** Denotes that one of the parameter estimates has hit the end of the given grid of tuning parameters.
 The grid can be adjusted in the ecap function.
+}
+\examples{
+set.seed(1)
+p_obs <- runif(1000, 0, 1)
+win_var <- rbinom(length(p_obs), 1, p_obs)
+ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
+summary(ecap_fit)
 }
 \references{
 http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf

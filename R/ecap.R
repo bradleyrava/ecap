@@ -15,8 +15,16 @@
 #' @return An ecap object that can be used to adjust new probability estimates. It contains all of the tuning parameters needed to calibrate
 #' ECAP as well as diagnostic information on the estimate of g. The probabilities used to calibrate ECAP have also been ECAP corrected and
 #' are given as part of the output.
+#' @importFrom splines splineDesign
+#' @importFrom quadprog solve.QP
+#' @importFrom stats quantile
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
+#' @examples
+#' set.seed(1)
+#' p_obs <- runif(1000, 0, 1)
+#' win_var <- rbinom(length(p_obs), 1, p_obs)
+#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
 #' @export
 ecap <- function(unadjusted_prob, win_var, win_id, bias_indicator = F, lambda_grid=10^seq(-6, 0, by=0.5),
                  gamma_grid=seq(0.001, 0.05, by=0.001), theta_grid=seq(-4, 2, 0.1)) {
@@ -171,11 +179,20 @@ ecap <- function(unadjusted_prob, win_var, win_id, bias_indicator = F, lambda_gr
 #'
 #' @param x An object of class ecap.
 #' @param digits The number of significant digits that should be displayed.
+#' @param ... Additional arguments
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
+#' @examples
+#' set.seed(1)
+#' p_obs <- runif(1000, 0, 1)
+#' win_var <- rbinom(length(p_obs), 1, p_obs)
+#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
+#' print(ecap_fit)
 #' @export
-print.ecap <- function(x, digits=4)
-{
+print.ecap <- function(x, digits, ...) {
+  if (missing(digits)) {
+    digits <- 4
+  }
   cat("\nECAP Adjustment Formula:\n",
       "E(p|p_tilde) + Var(p|p_tilde) / E(p|p_tilde) \n \n",
       "The optimal parameters picked for the ECAP adjustment are:",
@@ -195,10 +212,20 @@ print.ecap <- function(x, digits=4)
 #'
 #' @param x An object of class ecap.
 #' @param digits The number of significant digits that should be displayed.
+#' @param ... Additional arguments
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
+#' @examples
+#' set.seed(1)
+#' p_obs <- runif(1000, 0, 1)
+#' win_var <- rbinom(length(p_obs), 1, p_obs)
+#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
+#' summary(ecap_fit)
 #' @export
-summary.ecap <- function(x, digits=4) {
+summary.ecap <- function(x, digits, ...) {
+  if (missing(digits)) {
+    digits <- 4
+  }
   ## Head Text:
   title_ecap <- "\n ECAP Adjustment Summary: \n\n"
   ## Show given estimated values
@@ -263,10 +290,30 @@ summary.ecap <- function(x, digits=4) {
 #' probability estimates that were used to train the model.
 #'
 #' @param x An object of class ecap.
+#' @param ... Additional arguments
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 geom_line
+#' @importFrom ggplot2 aes
+#' @importFrom ggplot2 xlab
+#' @importFrom ggplot2 ylab
+#' @importFrom ggplot2 ggtitle
+#' @importFrom ggplot2 theme_minimal
+#' @examples
+#' set.seed(1)
+#' p_obs <- runif(1000, 0, 1)
+#' win_var <- rbinom(length(p_obs), 1, p_obs)
+#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
+#' plot(ecap_fit)
 #' @export
-plot.ecap <- function(x) {
+plot.ecap <- function(x, ...) {
+  ## Empty containers
+  p_tilde <- NULL
+  g_hat <- NULL
+  p <- NULL
+  adjustment_type <- NULL
+
   ## Plot of estimate of g()
   plot_data <- cbind.data.frame(p_tilde=sort(x$unadjusted_flip), g_hat=x$g_hat)
   g_hat_plot <- ggplot2::ggplot(plot_data, aes(x=p_tilde, y=g_hat)) +
@@ -293,11 +340,21 @@ plot.ecap <- function(x) {
 #' calibration from the ecap object to ECAP adjust the new probability estimates given to the function predict.
 #' @return A vector of ECAP adjusted probability estimates.
 #' @param x An object of class ecap.
+#' @param ... Additional arguments
 #' @param new_unadjusted A numerical vector of unadjusted probabilities that you want to ECAP adjust.
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
+#' @importFrom utils tail
+#' @examples
+#' set.seed(1)
+#' p_obs <- runif(1000, 0, 1)
+#' win_var <- rbinom(length(p_obs), 1, p_obs)
+#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
+#'
+#' p_new <- runif(1000, 0, 1)
+#' ecap_new <- predict(x=ecap_fit, new_unadjusted=p_new)
 #' @export
-predict.ecap <- function(x, new_unadjusted) {
+predict.ecap <- function(x, new_unadjusted, ...) {
   if (min(new_unadjusted) < 0 | max(new_unadjusted) > 1) {
     return(warning("Error. At least one of the unadjusted probabilities given is not a valid probability."))
   }
