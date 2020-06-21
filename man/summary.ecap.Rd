@@ -4,10 +4,10 @@
 \alias{summary.ecap}
 \title{Summary of ECAP Object}
 \usage{
-\method{summary}{ecap}(x, digits, ...)
+\method{summary}{ecap}(object, digits, ...)
 }
 \arguments{
-\item{x}{An object of class ecap.}
+\item{object}{An object of class ecap.}
 
 \item{digits}{The number of significant digits that should be displayed.}
 

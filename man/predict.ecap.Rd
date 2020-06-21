@@ -4,10 +4,10 @@
 \alias{predict.ecap}
 \title{Implementing the ECAP procedure}
 \usage{
-\method{predict}{ecap}(x, new_unadjusted, ...)
+\method{predict}{ecap}(object, new_unadjusted, ...)
 }
 \arguments{
-\item{x}{An object of class ecap.}
+\item{object}{An object of class ecap.}
 
 \item{new_unadjusted}{A numerical vector of unadjusted probabilities that you want to ECAP adjust.}
 
@@ -27,7 +27,7 @@ win_var <- rbinom(length(p_obs), 1, p_obs)
 ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
 
 p_new <- runif(1000, 0, 1)
-ecap_new <- predict(x=ecap_fit, new_unadjusted=p_new)
+ecap_new <- predict(object=ecap_fit, new_unadjusted=p_new)
 }
 \references{
 http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf

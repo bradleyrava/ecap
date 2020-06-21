@@ -210,7 +210,7 @@ print.ecap <- function(x, digits, ...) {
 #' *** Denotes that one of the parameter estimates has hit the end of the given grid of tuning parameters.
 #' The grid can be adjusted in the ecap function.
 #'
-#' @param x An object of class ecap.
+#' @param object An object of class ecap.
 #' @param digits The number of significant digits that should be displayed.
 #' @param ... Additional arguments
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
@@ -222,7 +222,7 @@ print.ecap <- function(x, digits, ...) {
 #' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
 #' summary(ecap_fit)
 #' @export
-summary.ecap <- function(x, digits, ...) {
+summary.ecap <- function(object, digits, ...) {
   if (missing(digits)) {
     digits <- 4
   }
@@ -230,47 +230,47 @@ summary.ecap <- function(x, digits, ...) {
   title_ecap <- "\n ECAP Adjustment Summary: \n\n"
   ## Show given estimated values
   optimal_params <- paste("The optimal parameters picked for the ECAP adjustment are:",
-                          paste("lambda = ", round(x$lambda,digits) , ", ", sep = ""),
-                          paste("gamma =", round(x$gamma, digits)),
+                          paste("lambda = ", round(object$lambda,digits) , ", ", sep = ""),
+                          paste("gamma =", round(object$gamma, digits)),
                           "and",
-                          paste("theta = ", round(x$theta,digits)))
+                          paste("theta = ", round(object$theta,digits)))
 
   ## Message for start of grid summary
   grid_summary_text <- "\n\n The optimal parameters were picked from these grids (*** estimate hit end of grid)"
 
   ## Summary of the grids used to pick the optimal parameters
-  lambda_summary <- paste("\n Lambda Grid - Length", length(x$lambda_grid), "From", round(range(x$lambda_grid)[1],digits), "to",
-                          round(range(x$lambda_grid)[2],digits))
-  gamma_summary <- paste("\n Gamma Grid - Length", length(x$gamma_grid),  "From", round(range(x$gamma_grid)[1],digits), "to",
-                         round(range(x$gamma_grid)[2],digits))
-  theta_summary <- paste("\n Theta Grid - Length", length(x$theta_grid),  "From", round(range(x$theta_grid)[1],digits), "to",
-                         round(range(x$theta_grid)[2],digits))
+  lambda_summary <- paste("\n Lambda Grid - Length", length(object$lambda_grid), "From", round(range(object$lambda_grid)[1],digits), "to",
+                          round(range(object$lambda_grid)[2],digits))
+  gamma_summary <- paste("\n Gamma Grid - Length", length(object$gamma_grid),  "From", round(range(object$gamma_grid)[1],digits), "to",
+                         round(range(object$gamma_grid)[2],digits))
+  theta_summary <- paste("\n Theta Grid - Length", length(object$theta_grid),  "From", round(range(object$theta_grid)[1],digits), "to",
+                         round(range(object$theta_grid)[2],digits))
 
   ## Warnings in case a parameter hits the end of the grid search
-  if (min(x$lambda_grid) == x$lambda | max(x$lambda_grid) == x$lambda) {
+  if (min(object$lambda_grid) == object$lambda | max(object$lambda_grid) == object$lambda) {
     lambda_summary <- NULL
-    lambda_summary <- paste("\n Lambda Grid - Length", length(x$lambda_grid), "From", round(range(x$lambda_grid)[1],digits), "to",
-                            round(range(x$lambda_grid)[2],digits), "***")
+    lambda_summary <- paste("\n Lambda Grid - Length", length(object$lambda_grid), "From", round(range(object$lambda_grid)[1],digits), "to",
+                            round(range(object$lambda_grid)[2],digits), "***")
   }
-  if (min(x$gamma_grid) == x$gamma | max(x$gamma_grid) == x$gamma) {
+  if (min(object$gamma_grid) == object$gamma | max(object$gamma_grid) == object$gamma) {
     gamma_summary <- NULL
-    gamma_summary <- paste("\n Gamma Grid - Length", length(x$gamma_grid),  "From", round(range(x$gamma_grid)[1],digits), "to",
-                           round(range(x$gamma_grid)[2],digits), "***")
+    gamma_summary <- paste("\n Gamma Grid - Length", length(object$gamma_grid),  "From", round(range(object$gamma_grid)[1],digits), "to",
+                           round(range(object$gamma_grid)[2],digits), "***")
   }
-  if (min(x$theta_grid) == x$theta | max(x$theta_grid) == x$theta) {
+  if (min(object$theta_grid) == object$theta | max(object$theta_grid) == object$theta) {
     theta_summary <- NULL
-    theta_summary <- paste("\n Theta Grid - Length", length(x$theta_grid),  "From", round(range(x$theta_grid)[1],digits), "to",
-                           round(range(x$theta_grid)[2], digits), "***")
+    theta_summary <- paste("\n Theta Grid - Length", length(object$theta_grid),  "From", round(range(object$theta_grid)[1],digits), "to",
+                           round(range(object$theta_grid)[2], digits), "***")
   }
 
   ## Summary of given probability estimates
-  unadjusted_summary <- paste("\n \n The unadjusted probabilities range from", round(min(x$unadjusted_prob),digits), "to",
-                              round(max(x$unadjusted_prob),digits), "with an average of", round(mean(x$unadjusted_prob),digits),
-                              " - Length", length(x$unadjusted_prob))
+  unadjusted_summary <- paste("\n \n The unadjusted probabilities range from", round(min(object$unadjusted_prob),digits), "to",
+                              round(max(object$unadjusted_prob),digits), "with an average of", round(mean(object$unadjusted_prob),digits),
+                              " - Length", length(object$unadjusted_prob))
   ## Summary of the ecap training probability estimates
-  ecap_training_summary <- paste("\n The ECAP training probabilities range from", round(min(x$ecap_training_probabilities),digits), "to",
-                                 round(max(x$ecap_training_probabilities),digits), "with an average of", round(mean(x$ecap_training_probabilities),digits),
-                                 " - Length", length(x$ecap_training_probabilities))
+  ecap_training_summary <- paste("\n The ECAP training probabilities range from", round(min(object$ecap_training_probabilities),digits), "to",
+                                 round(max(object$ecap_training_probabilities),digits), "with an average of", round(mean(object$ecap_training_probabilities),digits),
+                                 " - Length", length(object$ecap_training_probabilities))
 
 
   return(cat(title_ecap,
@@ -339,7 +339,7 @@ plot.ecap <- function(x, ...) {
 #' Takes in an ECAP object and a new set of probability estimates that the user wishes to adjust. The model uses the
 #' calibration from the ecap object to ECAP adjust the new probability estimates given to the function predict.
 #' @return A vector of ECAP adjusted probability estimates.
-#' @param x An object of class ecap.
+#' @param object An object of class ecap.
 #' @param ... Additional arguments
 #' @param new_unadjusted A numerical vector of unadjusted probabilities that you want to ECAP adjust.
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
@@ -352,9 +352,9 @@ plot.ecap <- function(x, ...) {
 #' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
 #'
 #' p_new <- runif(1000, 0, 1)
-#' ecap_new <- predict(x=ecap_fit, new_unadjusted=p_new)
+#' ecap_new <- predict(object=ecap_fit, new_unadjusted=p_new)
 #' @export
-predict.ecap <- function(x, new_unadjusted, ...) {
+predict.ecap <- function(object, new_unadjusted, ...) {
   if (min(new_unadjusted) < 0 | max(new_unadjusted) > 1) {
     return(warning("Error. At least one of the unadjusted probabilities given is not a valid probability."))
   }
@@ -367,8 +367,8 @@ predict.ecap <- function(x, new_unadjusted, ...) {
   })
 
   ## Combine new probs with the old ones
-  p_old_new <- c(x$unadjusted_prob, new_unadjusted)
-  p_old_new_flip <- c(x$unadjusted_flip, new_flip)
+  p_old_new <- c(object$unadjusted_prob, new_unadjusted)
+  p_old_new_flip <- c(object$unadjusted_flip, new_flip)
   probs_flip <- sort(p_old_new_flip)
 
   ## Generate basis function / omega matrix from p.tilde
@@ -395,7 +395,7 @@ predict.ecap <- function(x, new_unadjusted, ...) {
   basis_1.grid <- myns(pt, knots = quantiles, deriv = 1, intercept = T, Boundary.knots = knot.range)
   basis_sum.grid <- t(basis_0.grid)%*%basis_0.grid
 
-  ecap_old_new <- tweedie_est(x$lambda, x$gamma, x$theta, p_old_new, p_old_new_flip, pt,
+  ecap_old_new <- tweedie_est(object$lambda, object$gamma, object$theta, p_old_new, p_old_new_flip, pt,
                           omega, basis_0, basis_1, basis_sum, basis_0.grid, basis_1.grid)
 
   ecap_new <- tail(ecap_old_new, length(new_unadjusted))
