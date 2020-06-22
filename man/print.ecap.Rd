@@ -16,13 +16,6 @@
 \description{
 Prints summary information about the ECAP object
 }
-\examples{
-set.seed(1)
-p_obs <- runif(1000, 0, 1)
-win_var <- rbinom(length(p_obs), 1, p_obs)
-ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
-print(ecap_fit)
-}
 \references{
 http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 }
