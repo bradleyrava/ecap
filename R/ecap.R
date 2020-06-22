@@ -20,11 +20,6 @@
 #' @importFrom stats quantile
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
-#' @examples
-#' set.seed(1)
-#' p_obs <- runif(1000, 0, 1)
-#' win_var <- rbinom(length(p_obs), 1, p_obs)
-#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = FALSE)
 #' @export
 ecap <- function(unadjusted_prob, win_var, win_id, bias_indicator = F, lambda_grid=10^seq(-6, 0, by=0.5),
                  gamma_grid=seq(0.001, 0.05, by=0.001), theta_grid=seq(-4, 2, 0.1)) {
@@ -182,12 +177,6 @@ ecap <- function(unadjusted_prob, win_var, win_id, bias_indicator = F, lambda_gr
 #' @param ... Additional arguments
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
-#' @examples
-#' set.seed(1)
-#' p_obs <- runif(1000, 0, 1)
-#' win_var <- rbinom(length(p_obs), 1, p_obs)
-#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
-#' print(ecap_fit)
 #' @export
 print.ecap <- function(x, digits, ...) {
   if (missing(digits)) {
@@ -215,12 +204,6 @@ print.ecap <- function(x, digits, ...) {
 #' @param ... Additional arguments
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
-#' @examples
-#' set.seed(1)
-#' p_obs <- runif(1000, 0, 1)
-#' win_var <- rbinom(length(p_obs), 1, p_obs)
-#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = FALSE)
-#' summary(ecap_fit)
 #' @export
 summary.ecap <- function(object, digits, ...) {
   if (missing(digits)) {
@@ -300,12 +283,6 @@ summary.ecap <- function(object, digits, ...) {
 #' @importFrom ggplot2 ylab
 #' @importFrom ggplot2 ggtitle
 #' @importFrom ggplot2 theme_minimal
-#' @examples
-#' set.seed(1)
-#' p_obs <- runif(1000, 0, 1)
-#' win_var <- rbinom(length(p_obs), 1, p_obs)
-#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = FALSE)
-#' plot(ecap_fit)
 #' @export
 plot.ecap <- function(x, ...) {
   ## Empty containers
@@ -345,14 +322,6 @@ plot.ecap <- function(x, ...) {
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @importFrom utils tail
-#' @examples
-#' set.seed(1)
-#' p_obs <- runif(1000, 0, 1)
-#' win_var <- rbinom(length(p_obs), 1, p_obs)
-#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = FALSE)
-#'
-#' p_new <- runif(1000, 0, 1)
-#' ecap_new <- predict(object=ecap_fit, new_unadjusted=p_new)
 #' @export
 predict.ecap <- function(object, new_unadjusted, ...) {
   if (min(new_unadjusted) < 0 | max(new_unadjusted) > 1) {
