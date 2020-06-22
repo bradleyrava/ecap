@@ -24,7 +24,7 @@ calibration from the ecap object to ECAP adjust the new probability estimates gi
 set.seed(1)
 p_obs <- runif(1000, 0, 1)
 win_var <- rbinom(length(p_obs), 1, p_obs)
-ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
+ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = FALSE)
 
 p_new <- runif(1000, 0, 1)
 ecap_new <- predict(object=ecap_fit, new_unadjusted=p_new)
