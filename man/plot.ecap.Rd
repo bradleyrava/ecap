@@ -16,6 +16,15 @@ Plots diagnostic information of an ECAP object. Two plots are produced. The firs
 function g that the ecap procedure produced. The second compares the unadjusted probability estimates to the ECAP adjusted
 probability estimates that were used to train the model.
 }
+\examples{
+\dontrun{
+set.seed(1)
+p_obs <- runif(1000, 0, 1)
+win_var <- rbinom(length(p_obs), 1, p_obs)
+ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = FALSE)
+plot(ecap_fit)
+}
+}
 \references{
 http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 }

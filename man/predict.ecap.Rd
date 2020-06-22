@@ -20,6 +20,17 @@ A vector of ECAP adjusted probability estimates.
 Takes in an ECAP object and a new set of probability estimates that the user wishes to adjust. The model uses the
 calibration from the ecap object to ECAP adjust the new probability estimates given to the function predict.
 }
+\examples{
+\dontrun{
+set.seed(1)
+p_obs <- runif(1000, 0, 1)
+win_var <- rbinom(length(p_obs), 1, p_obs)
+ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = FALSE)
+
+p_new <- runif(1000, 0, 1)
+ecap_new <- predict(object=ecap_fit, new_unadjusted=p_new)
+}
+}
 \references{
 http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 }
