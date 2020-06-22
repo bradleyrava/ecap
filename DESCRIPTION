@@ -1,6 +1,6 @@
 Package: ecap
 Type: Package
-Title: Excess Certainty Adjusted Probability Adjusted Probability Estimate
+Title: Excess Certainty Adjusted Probability Estimate
 Version: 0.1.0
 Author: Bradley Rava, Peter Radchenko, and Gareth M. James
 Maintainer: Bradley Rava <brava@marshall.usc.edu>
