@@ -4,7 +4,7 @@ Title: Excess Certainty Adjusted Probability (ECAP) Adjusted Probability Estimat
 Version: 0.1.0
 Author: Bradley Rava, Peter Radchenko, and Gareth M. James
 Maintainer: Bradley Rava <brava@marshall.usc.edu>
-Description: Implements ECAP probability adjustment procedure as described in the paper "Irrational Exuberance: Correcting Bias in Probability Estimates" By: James, Radchenko, Rava 2020. The package includes a function that preforms the adjustment and a function that estimates the parameters needed to implement ECAP.
+Description: Implements the Excess Certainty Adjusted Probability adjustment procedure as described in the paper "Irrational Exuberance: Correcting Bias in Probability Estimates". The package includes a function that preforms the adjustment and a function that estimates the parameters needed to implement it.
 License: MIT + file LICENSE
 Depends:
 	splines (>= 3.6.0),

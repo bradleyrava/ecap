@@ -24,7 +24,7 @@
 #' set.seed(1)
 #' p_obs <- runif(1000, 0, 1)
 #' win_var <- rbinom(length(p_obs), 1, p_obs)
-#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
+#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = FALSE)
 #' @export
 ecap <- function(unadjusted_prob, win_var, win_id, bias_indicator = F, lambda_grid=10^seq(-6, 0, by=0.5),
                  gamma_grid=seq(0.001, 0.05, by=0.001), theta_grid=seq(-4, 2, 0.1)) {
@@ -219,7 +219,7 @@ print.ecap <- function(x, digits, ...) {
 #' set.seed(1)
 #' p_obs <- runif(1000, 0, 1)
 #' win_var <- rbinom(length(p_obs), 1, p_obs)
-#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
+#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = FALSE)
 #' summary(ecap_fit)
 #' @export
 summary.ecap <- function(object, digits, ...) {
@@ -304,7 +304,7 @@ summary.ecap <- function(object, digits, ...) {
 #' set.seed(1)
 #' p_obs <- runif(1000, 0, 1)
 #' win_var <- rbinom(length(p_obs), 1, p_obs)
-#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
+#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = FALSE)
 #' plot(ecap_fit)
 #' @export
 plot.ecap <- function(x, ...) {
@@ -349,7 +349,7 @@ plot.ecap <- function(x, ...) {
 #' set.seed(1)
 #' p_obs <- runif(1000, 0, 1)
 #' win_var <- rbinom(length(p_obs), 1, p_obs)
-#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = TRUE)
+#' ecap_fit <- ecap(unadjusted_prob = p_obs, win_var = win_var, win_id = 1, bias_indicator = FALSE)
 #'
 #' p_new <- runif(1000, 0, 1)
 #' ecap_new <- predict(object=ecap_fit, new_unadjusted=p_new)
