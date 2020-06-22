@@ -101,13 +101,12 @@ head(cbind.data.frame(ecap_p=prob_ecap, unadjusted_p=p_obs_test))
 If you have any further questions about the functions, please look at the individual documentation for each function. "?ecap". Specifically, if needed you can adjust the grid of tuning parameters that the package uses to pick the parameters needed to do the ECAP adjustment. A good sign you should do this is if the function is picking a value that is at the end of your grid. To know if this is happening, look at the summary output of your ecap object.
 
 ## Included Data
-For reproducibility, this package includes the two datasets discussed in the paper. We have already talked about FiveThirtyEight but we also included all the win probability estimates ESPN has predicted for the collegiate NCAA football games since 2017. This data is available to view on ESPN's website.
+For reproducibility, this package includes the FiveThirtyEight dataset discussed in the paper. The ESPN dataset that includes the win probabilities for the NCAA Collegiate Football 2016-2018 season's is included on my github. However, it is not included in the package due to size limitations. 
 
 To access this data, simply run the following commands. Where $x$ is the FiveThirtyEight 2018 midterm election data and $y$ is the ESPN NCAA football win probabilities. 
 
 ```{r}
 x <- ecap::elections_2018
-y <- ecap::espn
 ```
 
 # Further questions or comments?

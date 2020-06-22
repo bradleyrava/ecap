@@ -6,6 +6,7 @@ Author: Bradley Rava, Peter Radchenko, and Gareth M. James
 Maintainer: Bradley Rava <brava@marshall.usc.edu>
 Description: Implements the Excess Certainty Adjusted Probability adjustment procedure as described in the paper "Irrational Exuberance: Correcting Bias in Probability Estimates". The package includes a function that preforms the adjustment and a function that estimates the parameters needed to implement it.
 License: MIT + file LICENSE
+URL: http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 Depends:
 	splines (>= 3.6.0),
 	quadprog (>= 1.5.7),
