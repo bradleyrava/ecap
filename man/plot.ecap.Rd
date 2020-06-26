@@ -17,7 +17,7 @@ function g that the ecap procedure produced. The second compares the unadjusted 
 probability estimates that were used to train the model.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(1)
 p_obs <- runif(1000, 0, 1)
 win_var <- rbinom(length(p_obs), 1, p_obs)

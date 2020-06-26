@@ -21,7 +21,7 @@ Takes in an ECAP object and a new set of probability estimates that the user wis
 calibration from the ecap object to ECAP adjust the new probability estimates given to the function predict.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(1)
 p_obs <- runif(1000, 0, 1)
 win_var <- rbinom(length(p_obs), 1, p_obs)

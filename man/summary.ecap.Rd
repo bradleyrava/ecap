@@ -19,7 +19,7 @@ Prints summary information about the calibration of an ECAP object.
 The grid can be adjusted in the ecap function.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(1)
 p_obs <- runif(1000, 0, 1)
 win_var <- rbinom(length(p_obs), 1, p_obs)

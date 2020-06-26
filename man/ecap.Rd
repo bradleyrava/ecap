@@ -41,7 +41,7 @@ and bias in the given unadjusted probability estimates, along with a tuning para
 smoothness in the ECAP estimation.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(1)
 p_obs <- runif(1000, 0, 1)
 win_var <- rbinom(length(p_obs), 1, p_obs)

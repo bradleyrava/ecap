@@ -21,7 +21,7 @@
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(1)
 #' p_obs <- runif(1000, 0, 1)
 #' win_var <- rbinom(length(p_obs), 1, p_obs)
@@ -185,7 +185,7 @@ ecap <- function(unadjusted_prob, win_var, win_id, bias_indicator = F, lambda_gr
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(1)
 #' p_obs <- runif(1000, 0, 1)
 #' win_var <- rbinom(length(p_obs), 1, p_obs)
@@ -220,7 +220,7 @@ print.ecap <- function(x, digits, ...) {
 #' @author Bradley Rava, Peter Radchenko and Gareth M. James.
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(1)
 #' p_obs <- runif(1000, 0, 1)
 #' win_var <- rbinom(length(p_obs), 1, p_obs)
@@ -307,7 +307,7 @@ summary.ecap <- function(object, digits, ...) {
 #' @importFrom ggplot2 ggtitle
 #' @importFrom ggplot2 theme_minimal
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(1)
 #' p_obs <- runif(1000, 0, 1)
 #' win_var <- rbinom(length(p_obs), 1, p_obs)
@@ -354,7 +354,7 @@ plot.ecap <- function(x, ...) {
 #' @references http://faculty.marshall.usc.edu/gareth-james/Research/Probs.pdf
 #' @importFrom utils tail
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(1)
 #' p_obs <- runif(1000, 0, 1)
 #' win_var <- rbinom(length(p_obs), 1, p_obs)
