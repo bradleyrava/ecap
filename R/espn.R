@@ -12,5 +12,4 @@
 #' \item{time_left}{The amount of time left in the 4th quarter of the game when p.tilde was estimated.}
 #' \item{year}{The year / season the probabilty was referring to}
 #' }
-#' @source \url{www.espn.com}
 "espn"

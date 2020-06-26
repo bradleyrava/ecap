@@ -13,9 +13,6 @@ A data frame with 10314 rows and 4 variables:
 \item{year}{The year / season the probabilty was referring to}
 }
 }
-\source{
-\url{www.espn.com}
-}
 \usage{
 espn
 }
