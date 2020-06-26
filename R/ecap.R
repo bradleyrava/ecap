@@ -7,7 +7,7 @@
 #'
 #' @param unadjusted_prob Numeric vector of probability estimates that you want estimate the ECAP parameters from.
 #' @param win_var A binary vector of wins and losses that correspond to the probabilities in the unadjusted_prob vector
-#' @param win_id A value that denotes a "win" (or if the event occured) in the win_var vector.
+#' @param win_id A value that denotes a "win" (or if the event occurred) in the win_var vector.
 #' @param bias_indicator Set this equal to F if you don't want to consider bias in your estimation. Set it equal to T if you do.
 #' @param lambda_grid This is already predefined. However, you can adjust the grid of tuning parameters lambda that ECAP searches over if needed.
 #' @param gamma_grid This is already predefined. However, you can adjust the grid of gamma that ECAP searches over if needed.
