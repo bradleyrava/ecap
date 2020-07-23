@@ -11,7 +11,7 @@ Depends:
 	splines (>= 3.6.0),
 	quadprog (>= 1.5.7),
 	ggplot2,
-	R (>= 3.4.0)
+	R (>= 3.5.0)
 Suggests: 
     knitr,
     rmarkdown,
