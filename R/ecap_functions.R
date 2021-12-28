@@ -34,15 +34,13 @@ myns <- function (x, df = NULL, knots = NULL, intercept = FALSE,
     if (any(ol)) {
       k.pivot <- Boundary.knots[1L]
       xl <- cbind(1, x[ol] - k.pivot)
-      tt <- splines::splineDesign(Aknots, rep(k.pivot, 2L), 4, c(0,
-                                                        1), derivs=deriv)
+      tt <- splines::splineDesign(Aknots, rep(k.pivot, 2L), 4, 0, derivs=deriv)
       basis[ol, ] <- xl %*% tt
     }
     if (any(or)) {
       k.pivot <- Boundary.knots[2L]
       xr <- cbind(1, x[or] - k.pivot)
-      tt <- splineDesign(Aknots, rep(k.pivot, 2L), 4, c(0,
-                                                        1), derivs=deriv)
+      tt <- splineDesign(Aknots, rep(k.pivot, 2L), 4, 0, derivs=deriv)
       basis[or, ] <- xr %*% tt
     }
     if (any(inside <- !outside))
